@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070a12" />
+    <meta
+      name="description"
+      content="Three letters, then a voxel birthday cake lit only by three candle flames. Drag to spin the diorama; it drifts back into its own slow turn two seconds after you let go."
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b101c'/><rect x='9' y='15' width='14' height='9' fill='%23e0919b'/><rect x='8' y='12' width='16' height='4' fill='%23fff2d8'/><rect x='15' y='6' width='2' height='6' fill='%23f6ead1'/><rect x='15' y='3' width='2' height='3' fill='%23ffd27a'/></svg>" />
+    <title>烛光体素蛋糕 · Voxel Candle Cake</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body class="is-intro">
+    <main id="stage">
+      <canvas id="scene" aria-hidden="true"></canvas>
+
+      <!-- Static fallback: also the no-WebGL / context-lost view. Inlined at build time. -->
+      <div id="fallback" hidden>
+        <figure class="card"><!--FALLBACK_SVG--></figure>
+        <p id="fallback-note" class="fallback-note"></p>
+      </div>
+    </main>
+
+    <div id="ui">
+      <header class="ui-top">
+        <p class="eyebrow">Voxel · Candle · Cake</p>
+        <h1>烛光体素蛋糕</h1>
+      </header>
+      <footer class="ui-bottom">
+        <p class="blessing">
+          一岁一礼，一寸欢喜。<br />
+          愿这三簇烛光，把你要走的路照得<em>清清楚楚</em>。
+        </p>
+        <p class="hint">拖拽旋转 · 松手 2 秒后继续自转</p>
+      </footer>
+    </div>
+
+    <!-- Three letters, then the cake. Embossed voxel cards. -->
+    <section id="letters" class="letters" aria-label="三封短信">
+      <div class="letters__scrim" aria-hidden="true"></div>
+
+      <div class="letters__stage">
+        <article class="letter" data-step="0">
+          <div class="letter__card">
+            <div class="letter__head">
+              <p class="letter__kicker">第一封 · 今天</p>
+              <span class="letter__stamp" aria-hidden="true">★</span>
+            </div>
+            <h2 class="letter__title">给今天的你</h2>
+            <p class="letter__body">
+              生日快乐。<br />
+              今天可以不用长大，先把蜡烛点上。<br />
+              怎么说，这网上抄来的文案。
+            </p>
+            <div class="letter__foot">
+              <span class="letter__sign" aria-hidden="true">★ ★ ★</span>
+              <button class="btn" type="button" data-next="1">拆开下一封</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="letter" data-step="1">
+          <div class="letter__card">
+            <div class="letter__head">
+              <p class="letter__kicker">第二封 · 明天</p>
+              <span class="letter__stamp" aria-hidden="true">★</span>
+            </div>
+            <h2 class="letter__title">给明天的你</h2>
+            <p class="letter__body">
+              愿你走的路都有人同行，<br />
+              想吃蛋糕的时候，总有人陪你切。<br />
+              打三角洲的时候记得锁门，小心被刀。
+            </p>
+            <div class="letter__foot">
+              <span class="letter__sign" aria-hidden="true">★ ★ ★</span>
+              <button class="btn" type="button" data-next="2">拆开下一封</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="letter" data-step="2">
+          <div class="letter__card">
+            <div class="letter__head">
+              <p class="letter__kicker">第三封 · 很久以后</p>
+              <span class="letter__stamp" aria-hidden="true">★</span>
+            </div>
+            <h2 class="letter__title">给很久以后的你</h2>
+            <p class="letter__body">
+              愿你记得今晚的光，<br />
+              也记得自己一直值得被照亮。<br />
+              问一下，强哥还有什么作业。
+            </p>
+            <div class="letter__foot">
+              <span class="letter__sign" aria-hidden="true">★ ★ ★</span>
+              <button class="btn" type="button" data-next="3">去看蛋糕</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="letters__meta">
+        <div class="dots" aria-hidden="true">
+          <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        </div>
+        <button id="letters-skip" class="skip" type="button">跳过，直接看蛋糕 →</button>
+      </div>
+    </section>
+
+    <noscript>
+      <div class="noscript">
+        <p>这个生日场景需要 JavaScript 才能点亮蜡烛。</p>
+        <p>开启后刷新，或者直接看下面这句话：<br />一岁一礼，一寸欢喜。生日快乐。</p>
+      </div>
+    </noscript>
+
+    <script type="module" src="./src/letters.js"></script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

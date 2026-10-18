@@ -1,0 +1,23 @@
+{
+  "name": "voxel-candle-cake",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A voxel birthday cake diorama lit only by three candle flames. Three.js + Vite, single-file build.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:single": "vite build --mode single && node scripts/postbuild-single.mjs",
+    "preview": "vite preview",
+    "measure": "node scripts/measure.mjs",
+    "check:single": "node scripts/check-single.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1",
+    "vite": "^7.1.7",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}

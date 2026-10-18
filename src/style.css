@@ -1,0 +1,551 @@
+:root {
+  --ink: #f7ead2;
+  --ink-dim: rgba(247, 234, 210, 0.52);
+  --ink-faint: rgba(247, 234, 210, 0.3);
+  --warm: #ffb066;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  color: var(--ink);
+  background:
+    radial-gradient(120% 85% at 50% 40%, rgba(255, 176, 102, 0.16), rgba(255, 176, 102, 0) 52%),
+    radial-gradient(95% 65% at 50% 102%, rgba(126, 96, 168, 0.14), rgba(0, 0, 0, 0) 62%),
+    linear-gradient(180deg, #070a12 0%, #0b101c 46%, #05070d 100%);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* --------------------------------------------------------------- stage */
+#stage {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+}
+
+/* warm pool behind the diorama + a few night-sky specks */
+#stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 12% 14%, rgba(255, 240, 214, 0.5) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 82% 11%, rgba(255, 240, 214, 0.34) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 26% 27%, rgba(255, 240, 214, 0.26) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 68% 22%, rgba(255, 240, 214, 0.4) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 91% 34%, rgba(255, 240, 214, 0.22) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 7% 41%, rgba(255, 240, 214, 0.3) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 48% 8%, rgba(255, 240, 214, 0.28) 0 1px, transparent 1.8px),
+    radial-gradient(ellipse at center, rgba(255, 170, 95, 0.2) 0%, rgba(255, 170, 95, 0.07) 46%, rgba(255, 170, 95, 0) 72%);
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 50% 45%;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 64% 38%;
+  background-repeat: no-repeat;
+}
+
+#stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 60% at 50% 46%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.45) 100%),
+    linear-gradient(180deg, rgba(3, 5, 10, 0.55) 0%, rgba(3, 5, 10, 0) 22%, rgba(3, 5, 10, 0) 74%, rgba(3, 5, 10, 0.62) 100%);
+  z-index: 2;
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 900ms var(--ease) 80ms;
+  z-index: 1;
+}
+
+body.is-ready #scene {
+  opacity: 1;
+}
+
+body.is-dragging #scene {
+  cursor: grabbing;
+}
+
+body.is-fallback #scene {
+  display: none;
+}
+
+/* ----------------------------------------------------------------- ui */
+#ui {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 26px) 22px calc(env(safe-area-inset-bottom, 0px) + 22px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 1.2s var(--ease) 500ms, transform 1.2s var(--ease) 500ms;
+}
+
+#ui.is-shown {
+  opacity: 1;
+  transform: none;
+}
+
+.ui-top {
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.46em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+h1 {
+  margin: 0.5em 0 0;
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  font-size: clamp(19px, 2.4vw, 27px);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  color: rgba(255, 240, 216, 0.94);
+}
+
+.ui-bottom {
+  text-align: center;
+}
+
+body.is-fallback #ui {
+  opacity: 1;
+  transform: none;
+}
+
+body.is-fallback #ui .hint {
+  display: none;
+}
+
+.blessing {
+  margin: 0 auto;
+  max-width: 30em;
+  font-size: clamp(12px, 1.2vw, 14px);
+  line-height: 2.05;
+  letter-spacing: 0.08em;
+  color: rgba(247, 234, 210, 0.66);
+}
+
+.blessing em {
+  font-style: normal;
+  color: rgba(255, 214, 160, 0.9);
+}
+
+.hint {
+  margin: 16px 0 0;
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+}
+
+/* ----------------------------------------------------------- fallback */
+#fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 12vh 20px;
+}
+
+#fallback[hidden] {
+  display: none;
+}
+
+.card {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.card svg {
+  display: block;
+  width: auto;
+  height: min(58vh, 62vw);
+  max-width: min(520px, 100%);
+  border-radius: 20px;
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.62), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.fallback-note {
+  margin: 0;
+  max-width: 34em;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+
+body.is-fallback .hint {
+  display: none;
+}
+
+/* ------------------------------------------------------------- noscript */
+.noscript {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #070a12;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  #ui {
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) 18px calc(env(safe-area-inset-bottom, 0px) + 18px);
+  }
+
+  .blessing {
+    font-size: 12.5px;
+    line-height: 1.95;
+  }
+
+  .card svg {
+    height: min(52vh, 72vw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #scene,
+  #ui {
+    transition: none;
+  }
+}
+
+/* ============================================================== letters */
+/* Three embossed voxel letters before the cake. Everything is hard-edged:
+   no blur, no gradients on the card — stepped shadows and 3px bevels only. */
+.letters {
+  --paper: #f3e2c1;
+  --paper-hi: #fff3d8;
+  --paper-lo: #b98a55;
+  --edge: #241a12;
+  --ink-1: #3b2a1a;
+  --ink-2: #6b5238;
+  --gold: #e2b05a;
+  --notch: polygon(
+    8px 0, calc(100% - 8px) 0,
+    calc(100% - 8px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%, 8px 100%,
+    8px calc(100% - 8px), 0 calc(100% - 8px),
+    0 8px, 8px 8px
+  );
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  transition: opacity 0.65s var(--ease);
+}
+
+.letters[hidden] {
+  display: none;
+}
+
+.letters.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.letters__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(90% 70% at 50% 42%, rgba(10, 12, 20, 0.34), rgba(6, 7, 12, 0.8) 72%),
+    linear-gradient(180deg, rgba(4, 5, 9, 0.3), rgba(4, 5, 9, 0.7));
+}
+
+.letters__stage {
+  position: relative;
+  width: min(432px, 88vw);
+  display: grid;
+}
+
+.letter {
+  grid-area: 1 / 1;
+  position: relative;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(22px) scale(0.93);
+  transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.18, 1.3, 0.36, 1);
+}
+
+.letter.is-active {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.letter.is-gone {
+  opacity: 0;
+  transform: translateY(-14px) scale(0.97);
+}
+
+/* dark outline ring */
+.letter::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  background: var(--edge);
+  clip-path: var(--notch);
+  z-index: 0;
+}
+
+/* hard stepped drop shadow — the card lifts as it lands */
+.letter::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  background: #090603;
+  clip-path: var(--notch);
+  transform: translate(5px, 6px);
+  z-index: -1;
+  transition: transform 0.6s cubic-bezier(0.18, 1.3, 0.36, 1);
+}
+
+.letter.is-active::after {
+  transform: translate(12px, 14px);
+}
+
+.letter__card {
+  position: relative;
+  z-index: 1;
+  padding: 22px 22px 18px;
+  color: var(--ink-1);
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(120, 88, 48, 0) 0 25px,
+    rgba(120, 88, 48, 0.07) 25px 26px
+  );
+  clip-path: var(--notch);
+  box-shadow: inset 3px 3px 0 var(--paper-hi), inset -3px -3px 0 var(--paper-lo);
+}
+
+.letter__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.letter__kicker {
+  margin: 4px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: #8a6a45;
+}
+
+.letter__stamp {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  color: #4a2f12;
+  background: var(--gold);
+  box-shadow: inset 2px 2px 0 #ffd98f, inset -2px -2px 0 #a97a30;
+}
+
+.letter__title {
+  margin: 14px 0 0;
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-1);
+}
+
+.letter__title::after {
+  content: "";
+  display: block;
+  width: 46px;
+  height: 3px;
+  margin-top: 12px;
+  background: #c9a465;
+}
+
+.letter__body {
+  margin: 16px 0 22px;
+  font-size: 13.5px;
+  line-height: 2;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.letter__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.letter__sign {
+  font-size: 9px;
+  letter-spacing: 0.5em;
+  color: #b98a55;
+}
+
+/* hairline stationery frame, inside the notched edge */
+.letter__card::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(120, 88, 48, 0.2);
+  pointer-events: none;
+}
+
+.btn {
+  font: inherit;
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  padding: 11px 18px;
+  color: #2a1d10;
+  background: #e9b45c;
+  border: 0;
+  cursor: pointer;
+  box-shadow: inset 2px 2px 0 #ffd98f, inset -2px -2px 0 #a97a30, 4px 4px 0 var(--edge);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.2s ease;
+}
+
+.btn:hover {
+  background: #f0c172;
+}
+
+.btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: inset 2px 2px 0 #ffd98f, inset -2px -2px 0 #a97a30, 1px 1px 0 var(--edge);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--paper-hi);
+  outline-offset: 3px;
+}
+
+.letters__meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #3a2c1c;
+  box-shadow: inset 1px 1px 0 #5a4630;
+}
+
+.dot.is-on {
+  background: #e9b45c;
+  box-shadow: inset 1px 1px 0 #ffd98f;
+}
+
+.skip {
+  pointer-events: auto;
+  background: none;
+  border: 0;
+  padding: 8px 6px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: rgba(247, 234, 210, 0.42);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.skip:hover {
+  color: rgba(247, 234, 210, 0.85);
+}
+
+.skip:focus-visible {
+  outline: 1px solid rgba(247, 234, 210, 0.6);
+  outline-offset: 4px;
+}
+
+/* the cake only comes up after the third letter */
+body.is-intro #scene {
+  opacity: 0.16;
+}
+
+body.is-intro #ui {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .letters {
+    padding: 18px;
+  }
+
+  .letters__stage {
+    width: min(420px, 92vw);
+  }
+
+  .letter__card {
+    padding: 20px 18px 16px;
+  }
+
+  .letter__title {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter,
+  .letter::after {
+    transition: none;
+  }
+}

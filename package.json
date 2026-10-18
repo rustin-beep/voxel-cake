@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "A voxel birthday cake diorama lit only by three candle flames. Three.js + Vite, single-file build.",
+  "description": "A five-tier voxel birthday cake diorama lit only by three candle flames. Three.js + Vite, single-file build.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

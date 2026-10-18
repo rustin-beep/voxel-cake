@@ -1,11 +1,15 @@
 // Voxel layout for the birthday diorama.
 //
-// x,z ∈ [-19, 19], y ∈ [0, 22] → 39 × 23 × 39 cells, inside the 40 × 40 × 32 budget.
+// x,z ∈ [-19, 19], y ∈ [0, 31] → 39 × 32 × 39 cells, inside the 40 × 40 × 32 budget.
 //
 // Groups (three draw calls):
 //   solid  – ground, tray, gifts, balloons, strings, flowers, cat  (receive only)
 //   cake   – tiers, icing, candle plates, candle bodies            (cast + receive)
 //   flame  – three emissive candle tips                            (unlit)
+//
+// The cake is five tiers (19 cells of body) rather than three. Portrait
+// framing fits the square diorama by width, so a taller silhouette is what
+// keeps the cake from reading as a squat block on a phone.
 //
 // Small-screen rule: ornament must survive 8 px per cell. So: no random
 // speckle storms, no 1-cell features that need a magnifier — every detail is
@@ -90,11 +94,17 @@ export function buildWorld() {
 
   // ------------------------------------------------------------------ cake
   const sprinkles = ['berry', 'mint', 'gold', 'cream', 'cream', 'cream'];
+  // Five tiers, one cell inset per step: 23 × 23 at the base down to 15 × 15
+  // at the top. 5+4+4+3+3 = 19 cells of body, which keeps the star inside the
+  // 32-cell height budget while making the cake noticeably taller.
   const tiers = [
-    { half: 11, y0: 3, y1: 8, body: 'pink', drips: [-5, 4] },
-    { half: 9, y0: 9, y1: 13, body: 'vanilla', drips: [-3, 5] },
-    { half: 7, y0: 14, y1: 17, body: 'pink', drips: [-2, 3] },
+    { half: 11, y0: 3, y1: 7, body: 'pink', drips: [-6, 5] },
+    { half: 10, y0: 8, y1: 11, body: 'vanilla', drips: [-4, 6] },
+    { half: 9, y0: 12, y1: 15, body: 'pink', drips: [-5, 3] },
+    { half: 8, y0: 16, y1: 18, body: 'vanilla', drips: [-3, 5] },
+    { half: 7, y0: 19, y1: 21, body: 'pink', drips: [-2, 3] },
   ];
+  const topY = tiers[tiers.length - 1].y1;
 
   for (const t of tiers) {
     const h = t.half;
@@ -147,25 +157,25 @@ export function buildWorld() {
   // ---------------------------------------------------------- candle plates
   for (const x of [-4, 0, 4]) {
     for (let dx = -1; dx <= 1; dx++) {
-      for (let dz = -1; dz <= 1; dz++) putC(x + dx, 18, dz, 'goldTrim');
+      for (let dz = -1; dz <= 1; dz++) putC(x + dx, topY + 1, dz, 'goldTrim');
     }
-    for (let y = 19; y <= 21; y++) putC(x, y, 0, 'candle');
-    putF(x, 22, 0, 'flame');
+    for (let y = topY + 2; y <= topY + 4; y++) putC(x, y, 0, 'candle');
+    putF(x, topY + 5, 0, 'flame');
   }
 
   // ------------------------------------------------------------ star topper
   // 7 × 7 five-point star, two cells thick, on a stick above the candles.
   // It has to sit clear of the icing: when the lower points touched the cake
   // top they disappeared into the cream and the star read as a gold cross.
-  for (let y = 18; y <= 20; y++) putC(0, y, -6, 'goldTrim');
+  for (let y = topY + 1; y <= topY + 3; y++) putC(0, y, -6, 'goldTrim');
   const starRows = [
-    [21, [-3, 3]],
-    [22, [-2, -1, 1, 2]],
-    [23, [-1, 0, 1]],
-    [24, [-2, -1, 0, 1, 2]],
-    [25, [-3, -2, -1, 0, 1, 2, 3]],
-    [26, [-1, 0, 1]],
-    [27, [0]],
+    [topY + 4, [-3, 3]],
+    [topY + 5, [-2, -1, 1, 2]],
+    [topY + 6, [-1, 0, 1]],
+    [topY + 7, [-2, -1, 0, 1, 2]],
+    [topY + 8, [-3, -2, -1, 0, 1, 2, 3]],
+    [topY + 9, [-1, 0, 1]],
+    [topY + 10, [0]],
   ];
   for (const [y, xs] of starRows) {
     for (const x of xs) {
@@ -218,12 +228,12 @@ export function buildWorld() {
   const balloonTail = (x, y0, z) => {
     [0, 0, -1, 0].forEach((o, i) => putS(x + o, y0 - i, z, 'string'));
   };
-  balloon(-18, 18, -10, 'balloon1');
-  balloonTail(-16, 16, -8);
-  balloon(-16, 18, 1, 'balloon2');
-  balloonTail(-14, 16, 3);
-  balloon(15, 18, -14, 'balloon3');
-  balloonTail(17, 16, -12);
+  balloon(-18, 22, -10, 'balloon1');
+  balloonTail(-16, 20, -8);
+  balloon(-16, 22, 1, 'balloon2');
+  balloonTail(-14, 20, 3);
+  balloon(15, 22, -14, 'balloon3');
+  balloonTail(17, 20, -12);
 
   // --------------------------------------------------------------- flowers
   const flower = (x, z, petal) => {
@@ -277,7 +287,7 @@ export function buildWorld() {
   putS(-17, 4, 11, 'gift2Rib');
   putS(-16, 4, 12, 'gift2Rib');
 
-  const bounds = { min: [-19, 0, -19], max: [19, 22, 19] };
+  const bounds = { min: [-19, 0, -19], max: [19, 31, 19] };
   const counts = { solid: solid.size, cake: cake.size, flame: flame.size };
   return { solid, cake, flame, palette: PALETTE, bounds, counts };
 }

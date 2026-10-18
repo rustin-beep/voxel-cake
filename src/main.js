@@ -7,8 +7,10 @@ import { createMusic } from './music.js';
 // constants
 // --------------------------------------------------------------------------
 const ELEVATION = THREE.MathUtils.degToRad(28); // fixed 28° down-tilt
-const TARGET = new THREE.Vector3(0, 10, 0);
+const TARGET = new THREE.Vector3(0, 11.5, 0);
 const CAM_DISTANCE = 60;
+const SCENE_TOP = 32;          // top surface of the star topper (cell y = 31)
+const PORTRAIT_ZOOM = 1.18;    // crop only the outermost ground corners on tall screens
 const SPIN = 0.12;            // rad / s
 const RESUME_MS = 2000;       // auto-spin comes back 2s after release
 const DRAG_SENSITIVITY = 0.0075;
@@ -201,7 +203,7 @@ function boot() {
   scene.add(ambient);
 
   light = new THREE.PointLight(0xffcb98, 20, 140, 1.05);
-  light.position.set(0, 23.6, 0);
+  light.position.set(0, 27.6, 0);
   light.castShadow = true;
   light.shadow.mapSize.set(1024, 1024);
   light.shadow.camera.near = 1;
@@ -280,7 +282,7 @@ function computeCameraFit() {
   let maxY = 0;
   const xs = [-19.5, 19.5];
   const zs = [-19.5, 19.5];
-  const ys = [0, 27];
+  const ys = [0, SCENE_TOP];
   for (let i = 0; i < 24; i++) {
     placeCamera(cam, (i / 24) * Math.PI * 2);
     cam.updateMatrixWorld(true);
@@ -317,10 +319,16 @@ function resize() {
   if (aspect >= halfW / halfH) halfW = halfH * aspect;
   else halfH = halfW / aspect;
 
-  camera.left = -halfW;
-  camera.right = halfW;
-  camera.top = halfH;
-  camera.bottom = -halfH;
+  // The diorama is square, so a portrait screen fits it by width and leaves
+  // a lot of empty sky. A small zoom makes the cake read bigger on phones;
+  // the tray, cake and balloons still fit — only the outer ground corners
+  // can drift past the edge at 45°.
+  const zoom = aspect < 0.8 ? PORTRAIT_ZOOM : 1;
+
+  camera.left = -halfW / zoom;
+  camera.right = halfW / zoom;
+  camera.top = halfH / zoom;
+  camera.bottom = -halfH / zoom;
   camera.updateProjectionMatrix();
 
   updateCamera(azimuth);

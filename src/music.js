@@ -21,7 +21,13 @@ export function createMusic() {
   const MELODY = [0, 2, 4, 5, 4, 2, 1, 3, 5, 4, 2, 1, 0, 2, 3, -1];
   const BASS = [0, -1, -1, -1, 3, -1, -1, -1, 5, -1, -1, -1, 3, -1, -1, -1];
   const STEP = 0.44; // seconds per step; a 16-step loop ≈ 7 s
-  const LEVEL = 0.5;
+  // Phone speakers roll off low frequencies, so the old 0.5 master + 0.12
+  // voices read as barely-there.  Keep the same music-box balance, but push
+  // the master to 0.9 and catch the overlapping-note peaks with a compressor
+  // so the louder mix still cannot clip.
+  const LEVEL = 0.9;
+  const MELODY_LEVEL = 0.2;
+  const BASS_LEVEL = 0.115;
 
   function init() {
     if (ctx) return true;
@@ -29,7 +35,14 @@ export function createMusic() {
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = 0;
-    master.connect(ctx.destination);
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -12;
+    limiter.knee.value = 12;
+    limiter.ratio.value = 4;
+    limiter.attack.value = 0.004;
+    limiter.release.value = 0.22;
+    master.connect(limiter);
+    limiter.connect(ctx.destination);
 
     // a small room: delay → damped feedback → master
     const delay = ctx.createDelay(1);
@@ -65,7 +78,7 @@ export function createMusic() {
     shine.type = 'triangle';
     shine.frequency.value = freq * 2.005;
     const shineGain = ctx.createGain();
-    shineGain.gain.value = 0.14;
+    shineGain.gain.value = 0.18;
 
     const env = ctx.createGain();
     env.gain.setValueAtTime(0.0001, at);
@@ -95,9 +108,9 @@ export function createMusic() {
     while (nextTime < ctx.currentTime + 1.2) {
       const i = step % 16;
       const melody = MELODY[i];
-      if (melody >= 0) voice(SCALE[melody], nextTime, 1.5, 0.12, 0.32);
+      if (melody >= 0) voice(SCALE[melody], nextTime, 1.5, MELODY_LEVEL, 0.32);
       const bass = BASS[i];
-      if (bass >= 0) voice(SCALE[bass] / 4, nextTime, 2.4, 0.075, 0.12);
+      if (bass >= 0) voice(SCALE[bass] / 4, nextTime, 2.4, BASS_LEVEL, 0.12);
       nextTime += STEP;
       step += 1;
     }

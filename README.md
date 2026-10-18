@@ -51,3 +51,16 @@ voxel-cake/
 ├─ shots/                     # 验收截图与 report.json
 └─ .github/workflows/deploy.yml
 ```
+
+## 部署（GitHub Pages）
+
+线上：**https://rustin-beep.github.io/voxel-cake/** · 每次 push 到 `main`，`.github/workflows/deploy.yml` 自动构建 `dist/` 并发布。
+
+仓库需要先开启 Pages：**Settings → Pages → Source 选 GitHub Actions**，或者一条命令：
+
+```bash
+gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow
+```
+
+如果 workflow 在 `actions/configure-pages@v5` 这一步失败、`deploy` 显示 **skipped**（因为它 `needs: build`），
+就是 Pages 还没开。开启后 `gh run rerun <run-id>` 重跑即可。

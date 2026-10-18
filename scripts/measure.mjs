@@ -141,6 +141,32 @@ const run = async () => {
   };
   await page.screenshot({ path: path.join(OUT, 'desktop.png') });
 
+  // ---- ritual: blow the candles out, then let them come back --------------
+  report.ui = await page.evaluate(() => ({
+    visibleTitle: [...document.querySelectorAll('h1')].filter((h) => !h.classList.contains('sr-only')).map((h) => h.textContent.trim()),
+    musicButton: !!document.getElementById('music'),
+    musicPressed: document.getElementById('music')?.getAttribute('aria-pressed'),
+  }));
+
+  await page.click('#ritual');
+  await page.waitForTimeout(950);
+  const dark = await page.evaluate(() => ({
+    isDark: document.body.classList.contains('is-dark'),
+    ritual: window.__cake.ritual(),
+    status: (document.getElementById('status')?.textContent || '').trim(),
+  }));
+  await page.screenshot({ path: path.join(OUT, 'ritual-dark.png') });
+
+  await page.click('#ritual'); // "重新点亮" — skip the wait
+  await page.waitForTimeout(2900);
+  const relit = await page.evaluate(() => ({
+    isDark: document.body.classList.contains('is-dark'),
+    ritual: window.__cake.ritual(),
+    status: (document.getElementById('status')?.textContent || '').trim().slice(0, 24),
+  }));
+  await page.screenshot({ path: path.join(OUT, 'ritual-relit.png') });
+  report.ritual = { dark, relit };
+
   // -------------------------------------------------------------- phone
   const phone = await browser.newPage({
     viewport: { width: 390, height: 844 },

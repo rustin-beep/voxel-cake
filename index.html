@@ -24,18 +24,20 @@
     </main>
 
     <div id="ui">
-      <header class="ui-top">
-        <p class="eyebrow">Voxel · Candle · Cake</p>
-        <h1>烛光体素蛋糕</h1>
-      </header>
+      <h1 class="sr-only">烛光体素蛋糕</h1>
       <footer class="ui-bottom">
-        <p class="blessing">
+        <p class="status" id="status" aria-live="polite">
           一岁一礼，一寸欢喜。<br />
           愿这三簇烛光，把你要走的路照得<em>清清楚楚</em>。
         </p>
-        <p class="hint">拖拽旋转 · 松手 2 秒后继续自转</p>
+        <button class="ritual" id="ritual" type="button">吹灭蜡烛</button>
+        <p class="hint" id="hint">拖动旋转 · 轻点蛋糕也可以许愿</p>
       </footer>
     </div>
+
+    <button class="music" id="music" type="button" aria-pressed="false" aria-label="背景音乐开关">
+      <span class="music__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    </button>
 
     <!-- Three letters, then the cake. Embossed voxel cards. -->
     <section id="letters" class="letters" aria-label="三封短信">

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildWorld } from './world.js';
 import { buildVoxelGeometry } from './mesher.js';
+import { createMusic } from './music.js';
 
 // --------------------------------------------------------------------------
 // constants
@@ -23,6 +24,10 @@ const canvas = document.getElementById('scene');
 const fallback = document.getElementById('fallback');
 const fallbackNote = document.getElementById('fallback-note');
 const ui = document.getElementById('ui');
+const statusEl = document.getElementById('status');
+const ritualBtn = document.getElementById('ritual');
+const musicBtn = document.getElementById('music');
+const BLESSING_HTML = statusEl ? statusEl.innerHTML.trim() : '';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -65,6 +70,23 @@ let dragging = false;
 let resumeTimer = 0;
 let lastPointerX = 0;
 
+// ritual: lit → (blow) → dark → (relight) → lit
+let flameMesh = null;
+let ritual = 'lit';
+let ritualBusy = false;
+let lightScale = 1;
+let lightTarget = 1;
+let relightTimer = 0;
+
+// a tap is a pointer press that never really moved
+let pointerDownX = 0;
+let pointerDownY = 0;
+let pointerDownAt = 0;
+let pointerMoved = false;
+
+const music = createMusic();
+let musicStarted = false;
+
 const frameTimes = [];
 const stats = {
   drawcalls: 0,
@@ -79,6 +101,9 @@ window.__cake = {
   ready: false,
   fallback: null,
   skipIntro: () => window.__skipIntro?.(),
+  blowOut,
+  relight,
+  ritual: () => ({ state: ritual, lightScale: Math.round(lightScale * 100) / 100, music: musicStarted }),
   stats() {
     return {
       ...stats,
@@ -165,7 +190,7 @@ function boot() {
   cakeMesh.receiveShadow = true;
   cakeMesh.castShadow = true;
 
-  const flameMesh = new THREE.Mesh(flameGeo, flameMat);
+  flameMesh = new THREE.Mesh(flameGeo, flameMat);
   flameMesh.castShadow = false;
   flameMesh.receiveShadow = false;
 
@@ -224,9 +249,14 @@ function boot() {
       autoSpin = !reduceMotion;
       lastTime = 0;
       startLoop();
+      startMusic();
     };
-  } else if (autoSpin) {
-    startLoop();
+  } else {
+    if (autoSpin) startLoop();
+    // no letters (already dismissed): start on the first gesture
+    const kick = () => startMusic();
+    document.addEventListener('pointerdown', kick, { once: true, passive: true });
+    document.addEventListener('keydown', kick, { once: true });
   }
 }
 
@@ -305,6 +335,10 @@ function onPointerDown(event) {
   dragging = true;
   autoSpin = false;
   lastPointerX = event.clientX;
+  pointerDownX = event.clientX;
+  pointerDownY = event.clientY;
+  pointerDownAt = performance.now();
+  pointerMoved = false;
   canvas.setPointerCapture?.(event.pointerId);
   clearTimeout(resumeTimer);
   stopLoop();
@@ -315,6 +349,9 @@ function onPointerMove(event) {
   if (!dragging) return;
   const dx = event.clientX - lastPointerX;
   lastPointerX = event.clientX;
+  if (Math.abs(event.clientX - pointerDownX) + Math.abs(event.clientY - pointerDownY) > 12) {
+    pointerMoved = true;
+  }
   azimuth -= dx * DRAG_SENSITIVITY;
   updateCamera(azimuth);
   renderOnce();
@@ -325,13 +362,117 @@ function onPointerUp(event) {
   dragging = false;
   document.body.classList.remove('is-dragging');
   canvas.releasePointerCapture?.(event.pointerId);
-  if (reduceMotion) return; // no auto-spin for reduced-motion users
+
+  // a tap (not a drag) blows on the candles, or lights them again
+  if (event.type === 'pointerup' && !pointerMoved && performance.now() - pointerDownAt < 600) {
+    tapCake();
+  }
+
+  if (ritual !== 'lit' || reduceMotion) return;
   clearTimeout(resumeTimer);
   resumeTimer = window.setTimeout(() => {
     autoSpin = true;
     startLoop();
   }, RESUME_MS);
 }
+
+// --------------------------------------------------------------------------
+// the ritual: blow out the candles, then let them come back
+// --------------------------------------------------------------------------
+function tapCake() {
+  if (!window.__intro?.done) return;
+  if (ritual === 'lit') blowOut();
+  else if (ritual === 'dark') relight();
+}
+
+function blowOut() {
+  if (ritual !== 'lit' || !flameMesh || !window.__intro?.done) return;
+  ritual = 'dark';
+  ritualBusy = true;
+  autoSpin = false;
+  clearTimeout(resumeTimer);
+
+  flameMesh.visible = false;
+  lightTarget = 0;
+  document.body.classList.add('is-dark');
+
+  if (statusEl) statusEl.textContent = '愿望已经出发。';
+  if (ritualBtn) {
+    ritualBtn.disabled = false;
+    ritualBtn.textContent = '重新点亮';
+  }
+
+  startLoop();
+  clearTimeout(relightTimer);
+  relightTimer = window.setTimeout(relight, 2800);
+}
+
+function relight() {
+  if (ritual !== 'dark' || !flameMesh) return;
+  ritual = 'relighting';
+  clearTimeout(relightTimer);
+
+  flameMesh.visible = true;
+  lightTarget = 1.6;
+  document.body.classList.remove('is-dark');
+
+  if (statusEl) statusEl.textContent = '重新点亮。';
+  if (ritualBtn) {
+    ritualBtn.disabled = true;
+    ritualBtn.textContent = '正在点亮…';
+  }
+
+  window.setTimeout(() => {
+    lightTarget = 1;
+  }, 280);
+
+  window.setTimeout(() => {
+    ritual = 'lit';
+    ritualBusy = false;
+    if (!reduceMotion) {
+      autoSpin = true;
+      lastTime = 0;
+    }
+    if (statusEl) statusEl.innerHTML = BLESSING_HTML;
+    if (ritualBtn) {
+      ritualBtn.disabled = false;
+      ritualBtn.textContent = '吹灭蜡烛';
+    }
+    startLoop();
+  }, 2200);
+}
+
+// --------------------------------------------------------------------------
+// music
+// --------------------------------------------------------------------------
+function startMusic() {
+  if (musicStarted) return;
+  musicStarted = music.start();
+  updateMusicButton();
+}
+
+function updateMusicButton() {
+  if (!musicBtn) return;
+  const playing = musicStarted && !music.muted;
+  musicBtn.setAttribute('aria-pressed', String(playing));
+  document.body.classList.toggle('is-muted', !playing);
+}
+
+ritualBtn?.addEventListener('click', (event) => {
+  event.stopPropagation();
+  if (ritual === 'lit') blowOut();
+  else if (ritual === 'dark') relight();
+});
+
+musicBtn?.addEventListener('click', (event) => {
+  event.stopPropagation();
+  if (!musicStarted) {
+    startMusic();
+    return;
+  }
+  music.toggle();
+  updateMusicButton();
+});
 
 function onVisibility() {
   if (document.hidden) {
@@ -366,20 +507,25 @@ function tick(now) {
 
   if (autoSpin && !dragging) azimuth += SPIN * dt;
 
-  if (!reduceMotion && light) {
-    const t = now / 1000;
-    const wobble =
-      1 +
-      0.045 * Math.sin(t * 0.71) +
-      0.028 * Math.sin(t * 1.93 + 1.7) +
-      0.016 * Math.sin(t * 4.1 + 0.4);
-    light.intensity = baseLightIntensity * wobble;
+  if (light) {
+    let wobble = 1;
+    if (!reduceMotion) {
+      const t = now / 1000;
+      wobble =
+        1 +
+        0.045 * Math.sin(t * 0.71) +
+        0.028 * Math.sin(t * 1.93 + 1.7) +
+        0.016 * Math.sin(t * 4.1 + 0.4);
+    }
+    // lightTarget drives the blow-out / relight; the wobble rides on top of it
+    lightScale += (lightTarget - lightScale) * Math.min(1, dt * 9);
+    light.intensity = baseLightIntensity * lightScale * wobble;
   }
 
   updateCamera(azimuth);
   renderFrame(dt * 1000);
 
-  if (autoSpin || dragging) rafId = requestAnimationFrame(tick);
+  if (autoSpin || dragging || ritualBusy) rafId = requestAnimationFrame(tick);
 }
 
 function renderOnce() {
